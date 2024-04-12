@@ -34,6 +34,9 @@ class TaskSystemParallelSpawn: public ITaskSystem {
         TaskID runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,
                                 const std::vector<TaskID>& deps);
         void sync();
+    
+    private:
+        int max_num_threads;
 };
 
 /*
@@ -51,6 +54,18 @@ class TaskSystemParallelThreadPoolSpinning: public ITaskSystem {
         TaskID runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,
                                 const std::vector<TaskID>& deps);
         void sync();
+    private:
+        int num_threads;
+        std::vector<std::thread> vt;
+        int kill_all;
+        std::mutex* mtx_cnt_finished;
+        std::mutex* mtx;
+        IRunnable* runnable;
+        int num_total_tasks;
+        int cnt_finished;
+        int cur_task_id;
+        std::condition_variable* cv;
+        
 };
 
 /*
@@ -68,6 +83,22 @@ class TaskSystemParallelThreadPoolSleeping: public ITaskSystem {
         TaskID runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,
                                 const std::vector<TaskID>& deps);
         void sync();
+    private:
+        int num_threads_;
+        std::vector<std::thread> vt_;
+        int kill_all_;
+
+        int cur_taskid_;
+        int num_total_tasks_;
+        int num_finished_;
+
+        std::mutex mtx;
+        std::mutex mtx2;
+
+        IRunnable* runnable_;
+
+        std::condition_variable cv1;
+        std::condition_variable cv2;
 };
 
 #endif
