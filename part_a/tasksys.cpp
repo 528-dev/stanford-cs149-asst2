@@ -142,13 +142,16 @@ TaskSystemParallelThreadPoolSpinning::TaskSystemParallelThreadPoolSpinning(int m
         while (!kill_all) {
 
             // get the id of task to be done; 
-            mtx->lock();
-            int id = cur_task_id;
-            if (id >= num_total_tasks) {
-                mtx->unlock();
-                continue;
+            while (true){
+                if (kill_all) return;
+                mtx->lock();
+                if (cur_task_id >= num_total_tasks) {
+                    mtx->unlock();
+                    continue;
+                }
+                break;
             }
-            if (cur_task_id < num_total_tasks) cur_task_id ++;
+            int id = cur_task_id ++;
             mtx->unlock();
 
             // go go 
@@ -240,10 +243,10 @@ TaskSystemParallelThreadPoolSleeping::TaskSystemParallelThreadPoolSleeping(int m
         while (!kill_all_) {
             std::unique_lock<std::mutex> lk(mtx);
             cv1.wait(lk, [this]{return kill_all_ || cur_taskid_ < num_total_tasks_;});
+            if (kill_all_) return;
             int id = cur_taskid_ ++; // mutex access shared variable.
             lk.unlock();
 
-            if (kill_all_) return;
             runnable_->runTask(id, num_total_tasks_);
 
             mtx2.lock();
